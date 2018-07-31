@@ -17,6 +17,8 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -25,6 +27,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.james.garbagecar.database.TinyDB;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,7 +45,11 @@ public class ThirdFragment extends Fragment {
     private String account, password;
     private CheckBox chkRemeber;
     private TinyDB tinydb;
+    private CarsAdapter carsAdapter;
     boolean remeberMe;
+    private ListView listView;
+    ArrayList<GarbageCar> garbageCars = new ArrayList<GarbageCar>();
+    ArrayList<GarbageCar> filterCars = new ArrayList<GarbageCar>();
     public ThirdFragment() {
         // Required empty public constructor
     }
@@ -48,6 +57,7 @@ public class ThirdFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.e(TAG,"Third Oncreate : " + garbageCars.size());
 
     }
 
@@ -55,36 +65,36 @@ public class ThirdFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.third_fragment, container, false);
-        tinydb = new TinyDB(getActivity().getApplicationContext());
-        initView(view);
+        listView = (ListView) view.findViewById(R.id.lv_data);
+        garbageCars = ((MainActivity)getActivity()).get_garbageData();
+        for(int i =0; i<garbageCars.size();i++){
+            if(garbageCars.get(i).getDistance().contains("公尺")){
+                filterCars.add(garbageCars.get(i));
+            }
+        }
+        Log.e(TAG,"Third onCreateView : " + garbageCars.size());
+        DistanceSort(filterCars);
+        Log.e(TAG, filterCars.size() + "");
+        if(filterCars.size()==0){
+            filterCars.add(new GarbageCar("無","周圍無垃圾車","無","無","無","無","無","無","無") );
+        }
+        carsAdapter = new CarsAdapter(getActivity(), R.layout.activity_carsdetail_layout, filterCars);
+        listView.setAdapter(carsAdapter);
+        listView.invalidateViews();
+
         return view;
     }
-    private void initView(View view) {
-
-        //passwordLayout.setErrorEnabled(true);
-        //accoutLayout.setErrorEnabled(true);
-
-            if (tinydb.getString("account") != "") {
-                emailEditText.setText(tinydb.getString("account"));
-                passEditText.setText(tinydb.getString("password"));
-                chkRemeber.setChecked(true);
+    private void DistanceSort(ArrayList<GarbageCar> cars) {
+        Collections.sort(cars, new Comparator<GarbageCar>() {
+            @Override
+            public int compare(GarbageCar cars1, GarbageCar cars2) {
+                double a,b;
+                a = Double.parseDouble(cars1.getDistance().split("公")[0]);
+                b = Double.parseDouble(cars2.getDistance().split("公")[0]);
+                //Log.e(TAG,a + " V.S " + b);
+                return a < b ? -1 : 1;
             }
-
-
-
-
-    }
-    public void saveUserInfo(boolean isSave, String account, String password) {
-        if (isSave) {
-            tinydb.putString("account", account);
-            tinydb.putString("password", password);
-            remeberMe = true;
-        } else {
-            tinydb.putString("account", "");
-            tinydb.putString("password", "");
-            remeberMe = false;
-        }
-
+        });
     }
 
     private void alertDialog(String message) {

@@ -1,8 +1,10 @@
 package com.james.garbagecar;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -21,6 +23,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -45,7 +48,11 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class MainActivity extends AppCompatActivity implements LocationListener{
@@ -58,6 +65,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
     Double mLongitude, mLatitude;
     private String TAG = MainActivity.class.getSimpleName();
     ArrayList<GarbageCar> garbageCars = new ArrayList<GarbageCar>();
+    TextView txt_time;
+    Timer timer ;
+    MyReceiver receiver;
+    ViewPagerAdapter adapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,10 +78,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         getSupportActionBar().setDisplayHomeAsUpEnabled(false);
         checkPermission();
         locationServiceInitial();
-
+        timer = new Timer(true);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         setupViewPager(viewPager);
-
+        txt_time = (TextView)findViewById(R.id.txt_time);
         FirstFragment firestFragment = new FirstFragment();
         Bundle bundle = new Bundle();
         bundle.putBoolean("flag", true);
@@ -79,7 +90,31 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
 
         tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(viewPager);
+        Intent intent = new Intent(this, LongRunningService.class);
+        startService(intent);
         new AsyncHttpTask().execute(GARBAGE_URL);
+        receiver = new MyReceiver();
+        IntentFilter filter=new IntentFilter();
+        filter.addAction("android.intent.action.test");
+        registerReceiver(receiver,filter);
+    }
+
+    public class MyReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // TODO Auto-generated method stub
+            Log.e(TAG,"OnReceiver");
+            new AsyncHttpTask().execute(GARBAGE_URL);
+            Bundle bundle=intent.getExtras();
+            String a = bundle.getString("i");
+            Log.e(TAG,"Get I : " + a);
+            txt_time.setText("更新時間 : " + a);
+            adapter.notifyDataSetChanged();
+        }
+        public MyReceiver(){
+            System.out.println("MyReceiver");
+        }
+
     }
     public void checkPermission() {
         Log.e(TAG,"checkPermission...");
@@ -92,6 +127,17 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
             Toast.makeText(this, "請開啟定位服務", Toast.LENGTH_LONG).show();
             startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));    //開啟設定頁面
         }
+    }
+    public void onPause() {
+        super.onPause();
+        unregisterReceiver(receiver);
+    }
+    public void onResume() {
+        super.onResume();
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("android.intent.action.test");
+        registerReceiver(receiver, filter);
     }
 
     private void locationServiceInitial() {
@@ -120,16 +166,18 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
             getLocation(location);
         }
     }
-    public ArrayList<GarbageCar> get_garbageData()
-    {
-        return this.garbageCars;
+    public ArrayList<GarbageCar> get_garbageData() {
+        return garbageCars;
     }
     public class AsyncHttpTask extends AsyncTask<String, Void, Integer> {
         @Override
         protected Integer doInBackground(String... urls) {
             Integer result = 0;
+            garbageCars.clear();
             String lineid, car, time, location, longitude, latitude, cityid, cityname;
             try{
+
+                Log.e(TAG,"Get garbage Data");
                 String json = Jsoup.connect(urls[0]).ignoreContentType(true).execute().body();
                 //String output = json.substring(json.indexOf("{"), json.lastIndexOf("}") + 1);
                 JSONArray array = new JSONArray(json);
@@ -144,9 +192,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
                     cityid = jsonObject.getString("cityid");
                     cityname = jsonObject.getString("cityname");
                     String distanceFin = DistanceText(Distance(Double.parseDouble(longitude),Double.parseDouble(latitude), mLongitude, mLatitude));
-
                     garbageCars.add(new GarbageCar(lineid,car,time,location,longitude,latitude,cityid,cityname,distanceFin));
-                    Log.e(TAG,garbageCars.get(i).getCityname());
                 }
             }catch (Exception e){
                 Log.e(TAG,"Exception : " + e.toString());
@@ -156,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         }
         @Override
         protected void onPostExecute(Integer result) {
-
+            Log.e(TAG,"Main activity : " + garbageCars.size());
         }
         @Override
         protected void onPreExecute() {
@@ -188,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
     }
     private String DistanceText(double distance) {
         if (distance < 1000) {
-            //Log.e(TAG, String.valueOf((int) distance) + "公尺");
+            Log.e(TAG, String.valueOf((int) distance) + "公尺");
             return String.valueOf((int) distance) + "公尺";
         } else {
             //Log.e(TAG, new DecimalFormat("#.00").format(distance / 1000) + "公里");
@@ -239,9 +285,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         }
     }
     private void setupViewPager(ViewPager viewPager) {
-        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+        adapter = new ViewPagerAdapter(getSupportFragmentManager());
         adapter.addFragment(new FirstFragment(), "看垃圾車");
-        //adapter.addFragment(new SecondFragment(), "找娃娃機台");
         adapter.addFragment(new ThirdFragment(), "看詳細位置");
         viewPager.setAdapter(adapter);
         //viewPager.setOffscreenPageLimit(2);

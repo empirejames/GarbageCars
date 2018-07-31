@@ -25,7 +25,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <service android:name=".LongRunningService" >
+        </service>
+        <receiver android:name=".AlarmReceiver" >
+        </receiver>
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDHnWFJYSeAJ5u__tMN9NY-U62PBDlk2YM" />

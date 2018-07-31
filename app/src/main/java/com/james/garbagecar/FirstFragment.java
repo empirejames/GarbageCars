@@ -52,6 +52,7 @@ public class FirstFragment extends Fragment implements OnMapReadyCallback {
         Log.e(TAG,"Fragment onCreate");
         String[] perms = {android.Manifest.permission.ACCESS_FINE_LOCATION};
         mLocationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
+
     }
 
     @Override
@@ -82,9 +83,6 @@ public class FirstFragment extends Fragment implements OnMapReadyCallback {
             mMapView.onCreate(null);
             mMapView.onResume();
             mMapView.getMapAsync(this);
-            Log.e(TAG,"mMapView is success");
-        }else{
-            Log.e(TAG,"mMapView null");
         }
     }
     @Override

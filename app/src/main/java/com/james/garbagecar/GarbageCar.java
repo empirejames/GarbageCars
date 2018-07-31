@@ -15,6 +15,7 @@ public class GarbageCar {
     String cityid;
     String cityname;
     String distance;
+    private int _id;
 
     public GarbageCar(String lineid, String car, String time, String location, String longitude, String latitude, String cityid, String cityname, String distance) {
         this.lineid = lineid;
@@ -27,7 +28,9 @@ public class GarbageCar {
         this.cityname = cityname;
         this.distance = distance;
     }
-
+    public int getId() {
+        return _id;
+    }
     public String getLineid() {
         return lineid;
     }
