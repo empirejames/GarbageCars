@@ -34,7 +34,7 @@ public class LongRunningService extends Service {
                     intent.setAction("android.intent.action.test");//action与接收器相同
                     sendBroadcast(intent);
                     try {
-                        sleep(5* 1000);
+                        sleep(90* 1000);
                     } catch (InterruptedException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
@@ -58,7 +58,7 @@ public class LongRunningService extends Service {
             }
         }).start();
         AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        int anHour = 5 * 1000; // 这是一小时的毫秒数
+        int anHour = 90 * 1000; // 这是一小时的毫秒数
         long triggerAtTime = SystemClock.elapsedRealtime() + anHour;
         Intent i = new Intent(this, AlarmReceiver.class);
         PendingIntent pi = PendingIntent.getBroadcast(this, 0, i, 0);

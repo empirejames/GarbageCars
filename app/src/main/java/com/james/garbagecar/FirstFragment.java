@@ -38,7 +38,7 @@ public class FirstFragment extends Fragment implements OnMapReadyCallback {
     View mView;
     String TAG = FirstFragment.class.getSimpleName();
     ArrayList<GarbageCar> garbageCars = new ArrayList<GarbageCar>();
-
+    Location location = null;
     private LocationManager mLocationManager;
     public static final int LOCATION_UPDATE_MIN_DISTANCE = 10;
     public static final int LOCATION_UPDATE_MIN_TIME = 5000;
@@ -53,6 +53,13 @@ public class FirstFragment extends Fragment implements OnMapReadyCallback {
         String[] perms = {android.Manifest.permission.ACCESS_FINE_LOCATION};
         mLocationManager = (LocationManager) getActivity().getSystemService(LOCATION_SERVICE);
 
+    }
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+            //drawMarker(location);
+        }
     }
 
     @Override
@@ -78,12 +85,7 @@ public class FirstFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onViewCreated(View view , Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
-        mMapView = (MapView) mView.findViewById(R.id.map);
-        if(mMapView!=null){
-            mMapView.onCreate(null);
-            mMapView.onResume();
-            mMapView.getMapAsync(this);
-        }
+
     }
     @Override
     public void onResume() {
@@ -105,8 +107,6 @@ public class FirstFragment extends Fragment implements OnMapReadyCallback {
     private void getCurrentLocation() {
         boolean isGPSEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         boolean isNetworkEnabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-
-        Location location = null;
         if (!(isGPSEnabled || isNetworkEnabled)){
            // Toast.makeText(getActivity().getApplicationContext(), "這是一個Toast......", Toast.LENGTH_LONG).show();
         }
@@ -156,9 +156,9 @@ public class FirstFragment extends Fragment implements OnMapReadyCallback {
         }
     };
 
-    private void drawCars(){
+    public void drawCars(){
+        Log.e(TAG," drawCars . ");
         garbageCars = ((MainActivity)getActivity()).get_garbageData();
-
         LatLng gps;
         for(int i=0; i<garbageCars.size();i++){
             gps = new LatLng(Double.valueOf(garbageCars.get(i).getLatitude()),Double.valueOf(garbageCars.get(i).getLongitude()));
@@ -171,20 +171,22 @@ public class FirstFragment extends Fragment implements OnMapReadyCallback {
 
 
     }
-    private void drawMarker(Location location) {
+    public void drawMarker(Location location) {
         Log.e(TAG, " Start DrawMaker ...");
         if (mGooglemap != null) {
-            //mGooglemap.clear();
+            mGooglemap.clear();
             try{
                 LatLng gps = new LatLng(location.getLatitude(), location.getLongitude());
                 mGooglemap.addMarker(new MarkerOptions()
                         .position(gps)
                         .title("我在這"));
                 mGooglemap.moveCamera(CameraUpdateFactory.newLatLng(gps));
-                mGooglemap.animateCamera(CameraUpdateFactory.newLatLngZoom(gps, 16));
+                mGooglemap.animateCamera(CameraUpdateFactory.newLatLngZoom(gps, 14));
                 mGooglemap.getUiSettings().setZoomControlsEnabled(true);  // 右下角的放大縮小功能
-                mGooglemap.getUiSettings().setCompassEnabled(true);       // 左上角的指南針，要兩指旋轉才會出現
-                mGooglemap.getUiSettings().setMapToolbarEnabled(true);    // 右下角的導覽及開啟 Google Map功能
+                mGooglemap.getUiSettings().setMyLocationButtonEnabled(true); //顯示自己位置
+                mGooglemap.setMyLocationEnabled(true); //Map V2 require set this property
+                mGooglemap.getUiSettings().setCompassEnabled(true); //顯示指北針
+                //mGooglemap.getUiSettings().setMapToolbarEnabled(true);    // 右下角的導覽及開啟 Google Map功能
             }catch (Exception e){
 
             }

@@ -109,12 +109,17 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
             String a = bundle.getString("i");
             Log.e(TAG,"Get I : " + a);
             txt_time.setText("更新時間 : " + a);
-            adapter.notifyDataSetChanged();
+            updateViewPager();
+
         }
         public MyReceiver(){
             System.out.println("MyReceiver");
         }
 
+    }
+
+    private void updateViewPager() {
+        Log.e(TAG,"updateViewPager");
     }
     public void checkPermission() {
         Log.e(TAG,"checkPermission...");
@@ -156,7 +161,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
                     location = lms.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 }
                 getLocation(location);
-
             }
         }else {
             Location location  =lms.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);    ;
@@ -334,6 +338,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener{
         public int getCount() {
             return mFragmentList.size();
         }
+
 
         public void addFragment(Fragment fragment, String title) {
             mFragmentList.add(fragment);
